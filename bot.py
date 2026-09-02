@@ -168,19 +168,12 @@ def build_curated_list(items, n=NUM_ITEMS):
 
 def format_message(curated):
     today = datetime.now(timezone(timedelta(hours=5, minutes=30))).strftime("%d %B %Y")
-    lines = [f"🇮🇳 *India Current Affairs — {today}*", ""]
+    lines = [f"🇮🇳 India Current Affairs — {today}", ""]
     for i, item in enumerate(curated, 1):
-        lines.append(f"*Q{i}.* {escape_md(item['question'])}")
-        lines.append(f"➡️ *A:* {escape_md(item['answer'])}  _({escape_md(item['source'])})_")
+        lines.append(f"Q{i}. {item['question']}")
+        lines.append(f"➡️ A: {item['answer']}  ({item['source']})")
         lines.append("")
     return "\n".join(lines).strip()
-
-
-def escape_md(text):
-    # Escape Telegram MarkdownV2 special characters.
-    for ch in r"_*[]()~`>#+-=|{}.!":
-        text = text.replace(ch, f"\\{ch}")
-    return text
 
 
 def send_to_telegram(message):
@@ -195,13 +188,14 @@ def send_to_telegram(message):
         data={
             "chat_id": CHANNEL_ID,
             "text": message,
-            "parse_mode": "MarkdownV2",
+            # Plain text — no parse_mode — avoids Telegram's strict
+            # MarkdownV2 escaping rules rejecting the message.
             "disable_web_page_preview": True,
         },
         timeout=30,
     )
     if not resp.ok:
-        print(resp.text, file=sys.stderr)
+        print(f"TELEGRAM ERROR RESPONSE: {resp.text}", file=sys.stderr)
         resp.raise_for_status()
 
 
